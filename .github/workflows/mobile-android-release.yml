@@ -183,8 +183,13 @@ jobs:
                 -f tag_name="$tag" \
                 -f target_commitish="$GITHUB_SHA" \
                 -f previous_tag_name="$previous_tag" \
-                --jq .body > "$notes_file"; then
+                --jq .body > "$notes_file.raw"; then
                 : > "$notes_file"
+              elif ! node "$GITHUB_WORKSPACE/config/scripts/group-android-release-notes.mjs" \
+                < "$notes_file.raw" > "$notes_file"; then
+                # Why: a grouping bug must not ship a bare release — fall back to
+                # the flat generated notes rather than an empty body.
+                mv "$notes_file.raw" "$notes_file"
               fi
             fi
             if [ ! -s "$notes_file" ]; then
